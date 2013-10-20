@@ -2,14 +2,14 @@ package = "sundown"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/andresy/sundown-ffi.git"
+   url = "git://github.com/torch/sundown-ffi.git"
 }
 
 description = {
    summary = "A FFI interface to the Markdown implementation of the Sundown library",
    detailed = [[
    ]],
-   homepage = "https://github.com/andresy/sundown-ffi",
+   homepage = "https://github.com/torch/sundown-ffi",
    license = "BSD"
 }
 
