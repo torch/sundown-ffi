@@ -9,6 +9,8 @@ torch-rocks install https://raw.github.com/andresy/sundown-ffi/master/rocks/sund
 
 # Usage #
 
+The easiest is to use the provided `render()` function, which interfaces Sundown renderer with Houdini HTML default renderer.
+
 ```lua
 local sundown = require 'sundown'
 
