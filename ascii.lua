@@ -2,6 +2,8 @@ local sundown = require 'sundown.env'
 local C = sundown.C
 local ffi = require 'ffi'
 
+require 'sundown.sdcdefs'
+
 local c = {
    none = '\27[0m',
    black = '\27[0;30m',
