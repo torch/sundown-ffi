@@ -1,28 +1,9 @@
-local ffi = require 'ffi'
+local sundown = require 'sundown.env'
+local html = require 'sundown.html'
+local ascii = require 'sundown.ascii'
 
-require 'sundown.sdcdefs'
-require 'sundown.htmlcdefs'
-
-local C = ffi.load(package.searchpath('libsundown', package.cpath))
-local sundown = {C=C}
-
-function sundown.render(txt)
-   local callbacks = ffi.new('struct sd_callbacks')
-   local options = ffi.new('struct sdhtml_renderopt')
-   C.sdhtml_renderer(callbacks, options, 0)
-
-   local markdown = C.sd_markdown_new(0xfff, 16, callbacks, options)
-
-   local outbuf = ffi.new('struct sd_buf')
-   outbuf.data = nil
-   outbuf.size = 0
-   outbuf.asize = 0
-   outbuf.unit = 64
-
-   C.sd_markdown_render(outbuf, ffi.cast('const char*', txt), #txt, markdown)
-   C.sd_markdown_free(markdown)
-
-   return ffi.string(outbuf.data, outbuf.size)
-end
+sundown.render = html.render
+sundown.renderHTML = html.render
+sundown.renderASCII = ascii.render
 
 return sundown
