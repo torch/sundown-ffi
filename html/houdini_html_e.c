@@ -47,11 +47,11 @@ static const char *HTML_ESCAPES[] = {
 };
 
 void
-houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure)
+sd_houdini_escape_html0(struct sd_buf *ob, const uint8_t *src, size_t size, int secure)
 {
 	size_t i = 0, org, esc = 0;
 
-	bufgrow(ob, ESCAPE_GROW_FACTOR(size));
+	sd_bufgrow(ob, ESCAPE_GROW_FACTOR(size));
 
 	while (i < size) {
 		org = i;
@@ -59,7 +59,7 @@ houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure
 			i++;
 
 		if (i > org)
-			bufput(ob, src + org, i - org);
+			sd_bufput(ob, src + org, i - org);
 
 		/* escaping */
 		if (i >= size)
@@ -67,9 +67,9 @@ houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure
 
 		/* The forward slash is only escaped in secure mode */
 		if (src[i] == '/' && !secure) {
-			bufputc(ob, '/');
+			sd_bufputc(ob, '/');
 		} else {
-			bufputs(ob, HTML_ESCAPES[esc]);
+			sd_bufputs(ob, HTML_ESCAPES[esc]);
 		}
 
 		i++;
@@ -77,8 +77,8 @@ houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure
 }
 
 void
-houdini_escape_html(struct buf *ob, const uint8_t *src, size_t size)
+sd_houdini_escape_html(struct sd_buf *ob, const uint8_t *src, size_t size)
 {
-	houdini_escape_html0(ob, src, size, 1);
+	sd_houdini_escape_html0(ob, src, size, 1);
 }
 

@@ -34,10 +34,10 @@ extern "C" {
 typedef enum {
 	BUF_OK = 0,
 	BUF_ENOMEM = -1,
-} buferror_t;
+} sd_buferror_t;
 
-/* struct buf: character array buffer */
-struct buf {
+/* struct sd_buf: character array buffer */
+struct sd_buf {
 	uint8_t *data;		/* actual character data */
 	size_t size;	/* size of the string */
 	size_t asize;	/* allocated size (0 = volatile buffer) */
@@ -54,40 +54,40 @@ struct buf {
 
 /* BUFPUTSL: optimized bufputs of a string litteral */
 #define BUFPUTSL(output, literal) \
-	bufput(output, literal, sizeof literal - 1)
+	sd_bufput(output, literal, sizeof literal - 1)
 
 /* bufgrow: increasing the allocated size to the given value */
-int bufgrow(struct buf *, size_t);
+int sd_bufgrow(struct sd_buf *, size_t);
 
 /* bufnew: allocation of a new buffer */
-struct buf *bufnew(size_t) __attribute__ ((malloc));
+struct sd_buf *sd_bufnew(size_t) __attribute__ ((malloc));
 
 /* bufnullterm: NUL-termination of the string array (making a C-string) */
-const char *bufcstr(struct buf *);
+const char *sd_bufcstr(struct sd_buf *);
 
 /* bufprefix: compare the beginning of a buffer with a string */
-int bufprefix(const struct buf *buf, const char *prefix);
+int sd_bufprefix(const struct sd_buf *buf, const char *prefix);
 
 /* bufput: appends raw data to a buffer */
-void bufput(struct buf *, const void *, size_t);
+void sd_bufput(struct sd_buf *, const void *, size_t);
 
 /* bufputs: appends a NUL-terminated string to a buffer */
-void bufputs(struct buf *, const char *);
+void sd_bufputs(struct sd_buf *, const char *);
 
 /* bufputc: appends a single char to a buffer */
-void bufputc(struct buf *, int);
+void sd_bufputc(struct sd_buf *, int);
 
 /* bufrelease: decrease the reference count and free the buffer if needed */
-void bufrelease(struct buf *);
+void sd_bufrelease(struct sd_buf *);
 
 /* bufreset: frees internal data of the buffer */
-void bufreset(struct buf *);
+void sd_bufreset(struct sd_buf *);
 
 /* bufslurp: removes a given number of bytes from the head of the array */
-void bufslurp(struct buf *, size_t);
+void sd_bufslurp(struct sd_buf *, size_t);
 
 /* bufprintf: formatted printing to a buffer */
-void bufprintf(struct buf *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
+void sd_bufprintf(struct sd_buf *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
 
 #ifdef __cplusplus
 }

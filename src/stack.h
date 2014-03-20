@@ -7,20 +7,20 @@
 extern "C" {
 #endif
 
-struct stack {
+struct sd_stack {
 	void **item;
 	size_t size;
 	size_t asize;
 };
 
-void stack_free(struct stack *);
-int stack_grow(struct stack *, size_t);
-int stack_init(struct stack *, size_t);
+void sd_stack_free(struct sd_stack *);
+int sd_stack_grow(struct sd_stack *, size_t);
+int sd_stack_init(struct sd_stack *, size_t);
 
-int stack_push(struct stack *, void *);
+int sd_stack_push(struct sd_stack *, void *);
 
-void *stack_pop(struct stack *);
-void *stack_top(struct stack *);
+void *sd_stack_pop(struct sd_stack *);
+void *sd_stack_top(struct sd_stack *);
 
 #ifdef __cplusplus
 }

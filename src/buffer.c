@@ -26,63 +26,63 @@
 
 /* MSVC compat */
 #if defined(_MSC_VER)
-#	define _buf_vsnprintf _vsnprintf
+#	define _sd_buf_vsnprintf _vsnprintf
 #else
-#	define _buf_vsnprintf vsnprintf
+#	define _sd_buf_vsnprintf vsnprintf
 #endif
 
 int
-bufprefix(const struct buf *buf, const char *prefix)
+sd_bufprefix(const struct sd_buf *sd_buf, const char *prefix)
 {
 	size_t i;
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	for (i = 0; i < buf->size; ++i) {
+	for (i = 0; i < sd_buf->size; ++i) {
 		if (prefix[i] == 0)
 			return 0;
 
-		if (buf->data[i] != prefix[i])
-			return buf->data[i] - prefix[i];
+		if (sd_buf->data[i] != prefix[i])
+			return sd_buf->data[i] - prefix[i];
 	}
 
 	return 0;
 }
 
-/* bufgrow: increasing the allocated size to the given value */
+/* sd_bufgrow: increasing the allocated size to the given value */
 int
-bufgrow(struct buf *buf, size_t neosz)
+sd_bufgrow(struct sd_buf *sd_buf, size_t neosz)
 {
 	size_t neoasz;
 	void *neodata;
 
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
 	if (neosz > BUFFER_MAX_ALLOC_SIZE)
 		return BUF_ENOMEM;
 
-	if (buf->asize >= neosz)
+	if (sd_buf->asize >= neosz)
 		return BUF_OK;
 
-	neoasz = buf->asize + buf->unit;
+	neoasz = sd_buf->asize + sd_buf->unit;
 	while (neoasz < neosz)
-		neoasz += buf->unit;
+		neoasz += sd_buf->unit;
 
-	neodata = realloc(buf->data, neoasz);
+	neodata = realloc(sd_buf->data, neoasz);
 	if (!neodata)
 		return BUF_ENOMEM;
 
-	buf->data = neodata;
-	buf->asize = neoasz;
+	sd_buf->data = neodata;
+	sd_buf->asize = neoasz;
 	return BUF_OK;
 }
 
 
-/* bufnew: allocation of a new buffer */
-struct buf *
-bufnew(size_t unit)
+/* sd_bufnew: allocation of a new buffer */
+struct sd_buf *
+sd_bufnew(size_t unit)
 {
-	struct buf *ret;
-	ret = malloc(sizeof (struct buf));
+	struct sd_buf *ret;
+	ret = malloc(sizeof (struct sd_buf));
 
 	if (ret) {
 		ret->data = 0;
@@ -92,37 +92,37 @@ bufnew(size_t unit)
 	return ret;
 }
 
-/* bufnullterm: NULL-termination of the string array */
+/* sd_bufnullterm: NULL-termination of the string array */
 const char *
-bufcstr(struct buf *buf)
+sd_bufcstr(struct sd_buf *sd_buf)
 {
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	if (buf->size < buf->asize && buf->data[buf->size] == 0)
-		return (char *)buf->data;
+	if (sd_buf->size < sd_buf->asize && sd_buf->data[sd_buf->size] == 0)
+		return (char *)sd_buf->data;
 
-	if (buf->size + 1 <= buf->asize || bufgrow(buf, buf->size + 1) == 0) {
-		buf->data[buf->size] = 0;
-		return (char *)buf->data;
+	if (sd_buf->size + 1 <= sd_buf->asize || sd_bufgrow(sd_buf, sd_buf->size + 1) == 0) {
+		sd_buf->data[sd_buf->size] = 0;
+		return (char *)sd_buf->data;
 	}
 
 	return NULL;
 }
 
-/* bufprintf: formatted printing to a buffer */
+/* sd_bufprintf: formatted printing to a buffer */
 void
-bufprintf(struct buf *buf, const char *fmt, ...)
+sd_bufprintf(struct sd_buf *sd_buf, const char *fmt, ...)
 {
 	va_list ap;
 	int n;
 
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	if (buf->size >= buf->asize && bufgrow(buf, buf->size + 1) < 0)
+	if (sd_buf->size >= sd_buf->asize && sd_bufgrow(sd_buf, sd_buf->size + 1) < 0)
 		return;
 	
 	va_start(ap, fmt);
-	n = _buf_vsnprintf((char *)buf->data + buf->size, buf->asize - buf->size, fmt, ap);
+	n = _sd_buf_vsnprintf((char *)sd_buf->data + sd_buf->size, sd_buf->asize - sd_buf->size, fmt, ap);
 	va_end(ap);
 
 	if (n < 0) {
@@ -135,91 +135,91 @@ bufprintf(struct buf *buf, const char *fmt, ...)
 #endif
 	}
 
-	if ((size_t)n >= buf->asize - buf->size) {
-		if (bufgrow(buf, buf->size + n + 1) < 0)
+	if ((size_t)n >= sd_buf->asize - sd_buf->size) {
+		if (sd_bufgrow(sd_buf, sd_buf->size + n + 1) < 0)
 			return;
 
 		va_start(ap, fmt);
-		n = _buf_vsnprintf((char *)buf->data + buf->size, buf->asize - buf->size, fmt, ap);
+		n = _sd_buf_vsnprintf((char *)sd_buf->data + sd_buf->size, sd_buf->asize - sd_buf->size, fmt, ap);
 		va_end(ap);
 	}
 
 	if (n < 0)
 		return;
 
-	buf->size += n;
+	sd_buf->size += n;
 }
 
-/* bufput: appends raw data to a buffer */
+/* sd_bufput: appends raw data to a buffer */
 void
-bufput(struct buf *buf, const void *data, size_t len)
+sd_bufput(struct sd_buf *sd_buf, const void *data, size_t len)
 {
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	if (buf->size + len > buf->asize && bufgrow(buf, buf->size + len) < 0)
+	if (sd_buf->size + len > sd_buf->asize && sd_bufgrow(sd_buf, sd_buf->size + len) < 0)
 		return;
 
-	memcpy(buf->data + buf->size, data, len);
-	buf->size += len;
+	memcpy(sd_buf->data + sd_buf->size, data, len);
+	sd_buf->size += len;
 }
 
-/* bufputs: appends a NUL-terminated string to a buffer */
+/* sd_bufputs: appends a NUL-terminated string to a buffer */
 void
-bufputs(struct buf *buf, const char *str)
+sd_bufputs(struct sd_buf *sd_buf, const char *str)
 {
-	bufput(buf, str, strlen(str));
+	sd_bufput(sd_buf, str, strlen(str));
 }
 
 
-/* bufputc: appends a single uint8_t to a buffer */
+/* sd_bufputc: appends a single uint8_t to a buffer */
 void
-bufputc(struct buf *buf, int c)
+sd_bufputc(struct sd_buf *sd_buf, int c)
 {
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	if (buf->size + 1 > buf->asize && bufgrow(buf, buf->size + 1) < 0)
+	if (sd_buf->size + 1 > sd_buf->asize && sd_bufgrow(sd_buf, sd_buf->size + 1) < 0)
 		return;
 
-	buf->data[buf->size] = c;
-	buf->size += 1;
+	sd_buf->data[sd_buf->size] = c;
+	sd_buf->size += 1;
 }
 
-/* bufrelease: decrease the reference count and free the buffer if needed */
+/* sd_bufrelease: decrease the reference count and free the buffer if needed */
 void
-bufrelease(struct buf *buf)
+sd_bufrelease(struct sd_buf *sd_buf)
 {
-	if (!buf)
+	if (!sd_buf)
 		return;
 
-	free(buf->data);
-	free(buf);
+	free(sd_buf->data);
+	free(sd_buf);
 }
 
 
-/* bufreset: frees internal data of the buffer */
+/* sd_bufreset: frees internal data of the buffer */
 void
-bufreset(struct buf *buf)
+sd_bufreset(struct sd_buf *sd_buf)
 {
-	if (!buf)
+	if (!sd_buf)
 		return;
 
-	free(buf->data);
-	buf->data = NULL;
-	buf->size = buf->asize = 0;
+	free(sd_buf->data);
+	sd_buf->data = NULL;
+	sd_buf->size = sd_buf->asize = 0;
 }
 
-/* bufslurp: removes a given number of bytes from the head of the array */
+/* sd_bufslurp: removes a given number of bytes from the head of the array */
 void
-bufslurp(struct buf *buf, size_t len)
+sd_bufslurp(struct sd_buf *sd_buf, size_t len)
 {
-	assert(buf && buf->unit);
+	assert(sd_buf && sd_buf->unit);
 
-	if (len >= buf->size) {
-		buf->size = 0;
+	if (len >= sd_buf->size) {
+		sd_buf->size = 0;
 		return;
 	}
 
-	buf->size -= len;
-	memmove(buf->data, buf->data + len, buf->size);
+	sd_buf->size -= len;
+	memmove(sd_buf->data, sd_buf->data + len, sd_buf->size);
 }
 

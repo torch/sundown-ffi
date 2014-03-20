@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-struct html_renderopt {
+struct sd_html_renderopt {
 	struct {
 		int header_count;
 		int current_level;
@@ -35,7 +35,7 @@ struct html_renderopt {
 	unsigned int flags;
 
 	/* extra callbacks */
-	void (*link_attributes)(struct buf *ob, const struct buf *url, void *self);
+	void (*link_attributes)(struct sd_buf *ob, const struct sd_buf *url, void *self);
 };
 
 typedef enum {
@@ -49,7 +49,7 @@ typedef enum {
 	HTML_HARD_WRAP = (1 << 7),
 	HTML_USE_XHTML = (1 << 8),
 	HTML_ESCAPE = (1 << 9),
-} html_render_mode;
+} sd_html_render_mode;
 
 typedef enum {
 	HTML_TAG_NONE = 0,
@@ -58,16 +58,16 @@ typedef enum {
 } html_tag;
 
 int
-sdhtml_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname);
+sd_html_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname);
 
 extern void
-sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr, unsigned int render_flags);
+sd_html_renderer(struct sd_callbacks *callbacks, struct sd_html_renderopt *options_ptr, unsigned int render_flags);
 
 extern void
-sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr);
+sd_html_toc_renderer(struct sd_callbacks *callbacks, struct sd_html_renderopt *options_ptr);
 
 extern void
-sdhtml_smartypants(struct buf *ob, const uint8_t *text, size_t size);
+sd_html_smartypants(struct sd_buf *ob, const uint8_t *text, size_t size);
 
 #ifdef __cplusplus
 }

@@ -51,13 +51,13 @@ static const char HREF_SAFE[] = {
 };
 
 void
-houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
+sd_houdini_escape_href(struct sd_buf *ob, const uint8_t *src, size_t size)
 {
 	static const char hex_chars[] = "0123456789ABCDEF";
 	size_t  i = 0, org;
 	char hex_str[3];
 
-	bufgrow(ob, ESCAPE_GROW_FACTOR(size));
+	sd_bufgrow(ob, ESCAPE_GROW_FACTOR(size));
 	hex_str[0] = '%';
 
 	while (i < size) {
@@ -66,7 +66,7 @@ houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
 			i++;
 
 		if (i > org)
-			bufput(ob, src + org, i - org);
+			sd_bufput(ob, src + org, i - org);
 
 		/* escaping */
 		if (i >= size)
@@ -92,7 +92,7 @@ houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
 		 * when building GET strings */
 #if 0
 		case ' ':
-			bufputc(ob, '+');
+			sd_bufputc(ob, '+');
 			break;
 #endif
 
@@ -100,7 +100,7 @@ houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
 		default:
 			hex_str[1] = hex_chars[(src[i] >> 4) & 0xF];
 			hex_str[2] = hex_chars[src[i] & 0xF];
-			bufput(ob, hex_str, 3);
+			sd_bufput(ob, hex_str, 3);
 		}
 
 		i++;

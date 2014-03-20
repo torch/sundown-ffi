@@ -88,12 +88,6 @@ local bw_style = {
 
 local default_style = color_style
 
-ffi.cdef[[
-struct sd_buf *bufnew(size_t) __attribute__ ((malloc));
-void bufputs(struct sd_buf *, const char *);
-void bufrelease(struct sd_buf *);
-]]
-
 local function textsize(text)
    local szt = 0
    local nw = 0
@@ -124,7 +118,7 @@ local function createcallbacks(style)
                text = style.code .. text .. style.none
                n = n+1
                tree[n] = {tag='blockcode', text=text}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -136,7 +130,7 @@ local function createcallbacks(style)
                text = style['h' .. level] .. text .. style.none
                n = n+1
                tree[n] = {tag='header', text=text, level=level}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -147,7 +141,7 @@ local function createcallbacks(style)
                text = style.blockquote .. text .. style.none
                n = n+1
                tree[n] = {tag='blockquote', text=text}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -160,7 +154,7 @@ local function createcallbacks(style)
          function(ob, opaque)
             n = n+1
             tree[n] = {tag='hrule'}
-            C.bufputs(ob, '\030' .. n .. '\031')
+            C.sd_bufputs(ob, '\030' .. n .. '\031')
          end,
       
       paragraph =
@@ -169,7 +163,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='paragraph', text=text}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -190,7 +184,7 @@ local function createcallbacks(style)
             if text or header then
                n = n+1
                tree[n] = {tag='tbl', text=text, header=header}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -200,7 +194,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='tblrow', text=text}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -221,7 +215,7 @@ local function createcallbacks(style)
                   right=(flags==2),
                   center=(flags==3)
                }            
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -231,7 +225,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='list', text=text, type=bit.band(flags, 1)}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end 
          end,
 
@@ -241,7 +235,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='listitem', text=text}
-               C.bufputs(ob, '\030' .. n .. '\031')
+               C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -250,7 +244,7 @@ local function createcallbacks(style)
             if text ~= nil and text.data ~= nil then
                text = ffi.string(text.data, text.size)
                text = text:gsub('[\029\030\031]', '')
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
          end,
 
@@ -259,7 +253,7 @@ local function createcallbacks(style)
             if text ~= nil and text.data ~= nil then
                text = ffi.string(text.data, text.size)
                text = text:gsub('[\029\030\031]', '')
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
          end,
 
@@ -268,7 +262,7 @@ local function createcallbacks(style)
             if link ~= nil and link.data ~= nil then
                link = ffi.string(link.data, link.size)
                link = style.link .. link .. style.none
-               C.bufputs(ob, link)
+               C.sd_bufputs(ob, link)
             end
             return 1
          end,
@@ -278,7 +272,7 @@ local function createcallbacks(style)
             if text ~= nil and text.data ~= nil then
                text = ffi.string(text.data, text.size)
                text = style.code .. text .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -287,7 +281,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.doubleemph .. ffi.string(text.data, text.size) .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -296,7 +290,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.emph .. ffi.string(text.data, text.size) .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -312,14 +306,14 @@ local function createcallbacks(style)
                text = text .. ffi.string(link.data, link.size)
             end
             text = text .. ']' .. style.none
-            C.bufputs(ob, text)
+            C.sd_bufputs(ob, text)
             return 1
          end,
 
       linebreak =
          function(ob, opaque)
             local text = '\029'
-            C.bufputs(ob, text)   
+            C.sd_bufputs(ob, text)
          end,
       
       link =
@@ -335,7 +329,7 @@ local function createcallbacks(style)
                end
             end
             if #text > 0 then
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -350,7 +344,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.tripleemph .. ffi.string(text.data, text.size) .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -359,7 +353,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.strikethrough .. ffi.string(text.data, text.size) .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -368,7 +362,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.superscript .. ffi.string(text.data, text.size) .. style.none
-               C.bufputs(ob, text)
+               C.sd_bufputs(ob, text)
             end
             return 1
          end,
@@ -391,7 +385,7 @@ local function preprocess(txt, style)
    local c_callbacks = ffi.new('struct sd_callbacks', callbacks)
    local markdown = C.sd_markdown_new(0xfff, 16, c_callbacks, options)
    
-   local outbuf = C.bufnew(64)
+   local outbuf = C.sd_bufnew(64)
    
    C.sd_markdown_render(outbuf, ffi.cast('const char*', txt), #txt, markdown)
    C.sd_markdown_free(markdown)
@@ -401,7 +395,7 @@ local function preprocess(txt, style)
    end
 
    txt = ffi.string(outbuf.data, outbuf.size)
-   C.bufrelease(outbuf)
+   C.sd_bufrelease(outbuf)
 
    return txt, tree
 end

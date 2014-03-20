@@ -161,7 +161,7 @@ check_domain(uint8_t *data, size_t size, int allow_short)
 size_t
 sd_autolink__www(
 	size_t *rewind_p,
-	struct buf *link,
+	struct sd_buf *link,
 	uint8_t *data,
 	size_t max_rewind,
 	size_t size,
@@ -188,7 +188,7 @@ sd_autolink__www(
 	if (link_end == 0)
 		return 0;
 
-	bufput(link, data, link_end);
+	sd_bufput(link, data, link_end);
 	*rewind_p = 0;
 
 	return (int)link_end;
@@ -197,7 +197,7 @@ sd_autolink__www(
 size_t
 sd_autolink__email(
 	size_t *rewind_p,
-	struct buf *link,
+	struct sd_buf *link,
 	uint8_t *data,
 	size_t max_rewind,
 	size_t size,
@@ -244,7 +244,7 @@ sd_autolink__email(
 	if (link_end == 0)
 		return 0;
 
-	bufput(link, data - rewind, link_end + rewind);
+	sd_bufput(link, data - rewind, link_end + rewind);
 	*rewind_p = rewind;
 
 	return link_end;
@@ -253,7 +253,7 @@ sd_autolink__email(
 size_t
 sd_autolink__url(
 	size_t *rewind_p,
-	struct buf *link,
+	struct sd_buf *link,
 	uint8_t *data,
 	size_t max_rewind,
 	size_t size,
@@ -289,7 +289,7 @@ sd_autolink__url(
 	if (link_end == 0)
 		return 0;
 
-	bufput(link, data - rewind, link_end + rewind);
+	sd_bufput(link, data - rewind, link_end + rewind);
 	*rewind_p = rewind;
 
 	return link_end;

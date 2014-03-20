@@ -80,4 +80,17 @@ void sd_markdown_free(struct sd_markdown *md);
 
 void sd_version(int *major, int *minor, int *revision);
 
+/* buffer */
+
+int sd_bufgrow(struct sd_buf *, size_t);
+struct sd_buf *sd_bufnew(size_t) __attribute__ ((malloc));
+const char *sd_bufcstr(struct sd_buf *);
+int sd_bufprefix(const struct sd_buf *buf, const char *prefix);
+void sd_bufput(struct sd_buf *, const void *, size_t);
+void sd_bufputs(struct sd_buf *, const char *);
+void sd_bufputc(struct sd_buf *, int);
+void sd_bufrelease(struct sd_buf *);
+void sd_bufreset(struct sd_buf *);
+void sd_bufslurp(struct sd_buf *, size_t);
+
 ]]

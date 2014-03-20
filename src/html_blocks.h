@@ -87,7 +87,7 @@ inline
 #endif
 #endif
 static unsigned int
-hash_block_tag (str, len)
+sd_hash_block_tag (str, len)
      register const char *str;
      register unsigned int len;
 {
@@ -141,7 +141,7 @@ __attribute__ ((__gnu_inline__))
 #endif
 #endif
 const char *
-find_block_tag (str, len)
+sd_find_block_tag (str, len)
      register const char *str;
      register unsigned int len;
 {
@@ -192,7 +192,7 @@ find_block_tag (str, len)
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      register int key = hash_block_tag (str, len);
+      register int key = sd_hash_block_tag (str, len);
 
       if (key <= MAX_HASH_VALUE && key >= 0)
         {
