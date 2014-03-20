@@ -7,8 +7,8 @@ require 'sundown.htmlcdefs'
 
 local function render(txt)
    local callbacks = ffi.new('struct sd_callbacks')
-   local options = ffi.new('struct sdhtml_renderopt')
-   C.sdhtml_renderer(callbacks, options, 0)
+   local options = ffi.new('struct sd_html_renderopt')
+   C.sd_html_renderer(callbacks, options, 0)
 
    local markdown = C.sd_markdown_new(0xfff, 16, callbacks, options)
 

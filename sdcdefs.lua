@@ -9,13 +9,13 @@ struct sd_buf {
 	size_t unit;
 };
 
-enum mkd_autolink {
+enum sd_mkd_autolink {
 	MKDA_NOT_AUTOLINK,
 	MKDA_NORMAL,
 	MKDA_EMAIL,
 };
 
-enum mkd_tableflags {
+enum sd_mkd_tableflags {
 	MKD_TABLE_ALIGN_L = 1,
 	MKD_TABLE_ALIGN_R = 2,
 	MKD_TABLE_ALIGN_CENTER = 3,
@@ -23,7 +23,7 @@ enum mkd_tableflags {
 	MKD_TABLE_HEADER = 4
 };
 
-enum mkd_extensions {
+enum sd_mkd_extensions {
 	MKDEXT_NO_INTRA_EMPHASIS = (1 << 0),
 	MKDEXT_TABLES = (1 << 1),
 	MKDEXT_FENCED_CODE = (1 << 2),
@@ -47,7 +47,7 @@ struct sd_callbacks {
 	void (*table_row)(struct sd_buf *ob, const struct sd_buf *text, void *opaque);
 	void (*table_cell)(struct sd_buf *ob, const struct sd_buf *text, int flags, void *opaque);
 
-	int (*autolink)(struct sd_buf *ob, const struct sd_buf *link, enum mkd_autolink type, void *opaque);
+	int (*autolink)(struct sd_buf *ob, const struct sd_buf *link, enum sd_mkd_autolink type, void *opaque);
 	int (*codespan)(struct sd_buf *ob, const struct sd_buf *text, void *opaque);
 	int (*double_emphasis)(struct sd_buf *ob, const struct sd_buf *text, void *opaque);
 	int (*emphasis)(struct sd_buf *ob, const struct sd_buf *text, void *opaque);
