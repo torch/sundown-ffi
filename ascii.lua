@@ -401,8 +401,11 @@ local function preprocess(txt, style)
 end
 
 local function showindent(out, text, indent)
-   for line in text:gmatch('[^\n]+') do
+   for line, brk in text:gmatch('([^\n]+)([\n]*)') do
       table.insert(out, string.rep(' ', indent) .. line)
+      for i=1,#brk-1 do
+         table.insert(out, '')
+      end
    end
 end
 
