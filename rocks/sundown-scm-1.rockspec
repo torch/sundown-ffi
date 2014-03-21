@@ -27,24 +27,24 @@ build = {
    modules = {
       ["sundown.env"] = "env.lua",
       ["sundown.init"] = "init.lua",
-      ["sundown.sdcdefs"] = "sdcdefs.lua",
+      ["sundown.cdefs"] = "cdefs.lua",
       ["sundown.htmlcdefs"] = "htmlcdefs.lua",
       ["sundown.html"] = "html.lua",
       ["sundown.ascii"] = "ascii.lua",
-      libsundown = {
+      libhoedown = {
          sources = {
-            "src/autolink.c",
-            "src/buffer.c",
-            "src/markdown.c",
-            "src/stack.c",
-            "html/houdini_href_e.c",
-            "html/houdini_html_e.c",
-            "html/html.c",
-            "html/html_smartypants.c"
+            "hoedown/src/autolink.c",
+            "hoedown/src/buffer.c",
+            "hoedown/src/document.c",
+            "hoedown/src/escape.c",
+            "hoedown/src/html.c",
+            "hoedown/src/html_blocks.c",
+            "hoedown/src/html_smartypants.c",
+            "hoedown/src/stack.c",
+            "hoedown/src/version.c"
          },
          incdirs = {
-            "src/",
-            "html/"
+            "hoedown/src/"
          }
       }
    }

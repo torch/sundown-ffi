@@ -2,7 +2,7 @@ local sundown = require 'sundown.env'
 local C = sundown.C
 local ffi = require 'ffi'
 
-require 'sundown.sdcdefs'
+require 'sundown.cdefs'
 
 local c = {
    none = '\27[0m',
@@ -56,7 +56,11 @@ local color_style = {
    ulist = c.magenta,
    olist = c.magenta,
    tableheader = c.magenta,
-   superscript = '^'
+   superscript = '^',
+   highlight = c.Red,
+   quote = c.Yellow,
+   underline = c._red,
+   footnote = c.blue
 }
 
 local bw_style = {
@@ -83,7 +87,8 @@ local bw_style = {
    ulist = '',
    olist = '',
    tableheader = '',
-   superscript = '^'
+   superscript = '^',
+   underline = c._
 }
 
 local default_style = color_style
@@ -111,6 +116,8 @@ local function createcallbacks(style)
    local n = 0
    
    local callbacks = {
+      opaque = ffi.cast('void*', nil),
+
       blockcode =
          function(ob, text, lang, opaque)
             if text ~= nil and text.data ~= nil then
@@ -118,19 +125,7 @@ local function createcallbacks(style)
                text = style.code .. text .. style.none
                n = n+1
                tree[n] = {tag='blockcode', text=text}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
-            end
-         end,
-
-      header =
-         function(ob, text, level, opaque)
-            if text ~= nil and text.data ~= nil then
-               text = ffi.string(text.data, text.size)
-               level = math.max(math.min(level, 6), 1)
-               text = style['h' .. level] .. text .. style.none
-               n = n+1
-               tree[n] = {tag='header', text=text, level=level}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -141,7 +136,7 @@ local function createcallbacks(style)
                text = style.blockquote .. text .. style.none
                n = n+1
                tree[n] = {tag='blockquote', text=text}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -150,11 +145,43 @@ local function createcallbacks(style)
             -- do nothing
          end,
 
+      header =
+         function(ob, text, level, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = ffi.string(text.data, text.size)
+               level = math.max(math.min(level, 6), 1)
+               text = style['h' .. level] .. text .. style.none
+               n = n+1
+               tree[n] = {tag='header', text=text, level=level}
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
+            end
+         end,
+
       hrule =
          function(ob, opaque)
             n = n+1
             tree[n] = {tag='hrule'}
-            C.sd_bufputs(ob, '\030' .. n .. '\031')
+            C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
+         end,
+
+      list =
+         function(ob, text, flags, opaque)
+            if text and text.data ~= nil then
+               text = ffi.string(text.data, text.size)
+               n = n+1
+               tree[n] = {tag='list', text=text, type=bit.band(flags, 1)}
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
+            end 
+         end,
+
+      listitem =
+         function(ob, text, flags, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = ffi.string(text.data, text.size)
+               n = n+1
+               tree[n] = {tag='listitem', text=text}
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
+            end
          end,
       
       paragraph =
@@ -163,7 +190,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='paragraph', text=text}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -184,7 +211,7 @@ local function createcallbacks(style)
             if text or header then
                n = n+1
                tree[n] = {tag='tbl', text=text, header=header}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -194,7 +221,7 @@ local function createcallbacks(style)
                text = ffi.string(text.data, text.size)
                n = n+1
                tree[n] = {tag='tblrow', text=text}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
@@ -215,45 +242,27 @@ local function createcallbacks(style)
                   right=(flags==2),
                   center=(flags==3)
                }            
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
+               C.hoedown_buffer_puts(ob, '\030' .. n .. '\031')
             end
          end,
 
-      list =
-         function(ob, text, flags, opaque)
+      footnotes =
+         function(ob, text, opaque)
             if text and text.data ~= nil then
                text = ffi.string(text.data, text.size)
-               n = n+1
-               tree[n] = {tag='list', text=text, type=bit.band(flags, 1)}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
-            end 
+               n = n + 1
+               tree[n] = {tag='footnotes', text=text}
+               C.hoedown_buffer_puts(ob,  '\030' .. n .. '\031') 
+            end            
          end,
 
-      listitem =
-         function(ob, text, flags, opaque)
-            if text ~= nil and text.data ~= nil then
+      footnote_def =
+         function(ob, text, num, opaque)
+            if text and text.data ~= nil then
                text = ffi.string(text.data, text.size)
-               n = n+1
-               tree[n] = {tag='listitem', text=text}
-               C.sd_bufputs(ob, '\030' .. n .. '\031')
-            end
-         end,
-
-      normal_text =
-         function(ob, text, opaque)
-            if text ~= nil and text.data ~= nil then
-               text = ffi.string(text.data, text.size)
-               text = text:gsub('[\029\030\031]', '')
-               C.sd_bufputs(ob, text)
-            end
-         end,
-
-      entity = 
-         function(ob, text, opaque)
-            if text ~= nil and text.data ~= nil then
-               text = ffi.string(text.data, text.size)
-               text = text:gsub('[\029\030\031]', '')
-               C.sd_bufputs(ob, text)
+               n = n + 1
+               tree[n] = {tag='footnote', text=text, num=num}
+               C.hoedown_buffer_puts(ob,  '\030' .. n .. '\031') 
             end
          end,
 
@@ -262,7 +271,7 @@ local function createcallbacks(style)
             if link ~= nil and link.data ~= nil then
                link = ffi.string(link.data, link.size)
                link = style.link .. link .. style.none
-               C.sd_bufputs(ob, link)
+               C.hoedown_buffer_puts(ob, link)
             end
             return 1
          end,
@@ -272,7 +281,7 @@ local function createcallbacks(style)
             if text ~= nil and text.data ~= nil then
                text = ffi.string(text.data, text.size)
                text = style.code .. text .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -281,7 +290,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.doubleemph .. ffi.string(text.data, text.size) .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -290,7 +299,34 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.emph .. ffi.string(text.data, text.size) .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
+            end
+            return 1
+         end,
+
+      underline =
+         function(ob, text, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = style.underline .. ffi.string(text.data, text.size) .. style.none
+               C.hoedown_buffer_puts(ob, text)
+            end
+            return 1
+         end,
+
+      highlight =
+         function(ob, text, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = style.highlight .. ffi.string(text.data, text.size) .. style.none
+               C.hoedown_buffer_puts(ob, text)
+            end
+            return 1
+         end,
+
+      quote =
+         function(ob, text, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = style.quote .. ffi.string(text.data, text.size) .. style.none
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -306,14 +342,15 @@ local function createcallbacks(style)
                text = text .. ffi.string(link.data, link.size)
             end
             text = text .. ']' .. style.none
-            C.sd_bufputs(ob, text)
+            C.hoedown_buffer_puts(ob, text)
             return 1
          end,
 
       linebreak =
          function(ob, opaque)
             local text = '\029'
-            C.sd_bufputs(ob, text)
+            C.hoedown_buffer_puts(ob, text)
+            return 1
          end,
       
       link =
@@ -329,7 +366,7 @@ local function createcallbacks(style)
                end
             end
             if #text > 0 then
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -344,7 +381,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.tripleemph .. ffi.string(text.data, text.size) .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -353,7 +390,7 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.strikethrough .. ffi.string(text.data, text.size) .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
          end,
@@ -362,9 +399,34 @@ local function createcallbacks(style)
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = style.superscript .. ffi.string(text.data, text.size) .. style.none
-               C.sd_bufputs(ob, text)
+               C.hoedown_buffer_puts(ob, text)
             end
             return 1
+         end,
+
+      footnote_ref =
+         function(ob, num, opaque)
+            text = style.footnote .. '[' .. tonumber(num) .. ']' .. style.none
+            C.hoedown_buffer_puts(ob, text)
+            return 1
+         end,
+
+      normal_text =
+         function(ob, text, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = ffi.string(text.data, text.size)
+               text = text:gsub('[\029\030\031]', '')
+               C.hoedown_buffer_puts(ob, text)
+            end
+         end,
+
+      entity = 
+         function(ob, text, opaque)
+            if text ~= nil and text.data ~= nil then
+               text = ffi.string(text.data, text.size)
+               text = text:gsub('[\029\030\031]', '')
+               C.hoedown_buffer_puts(ob, text)
+            end
          end,
 
       doc_header =
@@ -381,21 +443,22 @@ end
 
 
 local function preprocess(txt, style)
-   local callbacks, tree = createcallbacks(style)
-   local c_callbacks = ffi.new('struct sd_callbacks', callbacks)
-   local markdown = C.sd_markdown_new(0xfff, 16, c_callbacks, options)
    
-   local outbuf = C.sd_bufnew(64)
-   
-   C.sd_markdown_render(outbuf, ffi.cast('const char*', txt), #txt, markdown)
-   C.sd_markdown_free(markdown)
+   local ob = C.hoedown_buffer_new(64);
 
+   local callbacks, tree = createcallbacks(style)
+   local c_callbacks = ffi.new('struct hoedown_renderer', callbacks)
+   local document = C.hoedown_document_new(c_callbacks, 0xfff, 16)
+   C.hoedown_document_render(document, ob, ffi.cast('const char*', txt), #txt);
+   C.hoedown_document_free(document);
    for name,_ in pairs(callbacks) do
-      c_callbacks[name]:free()
+      if name ~= 'opaque' then
+         c_callbacks[name]:free()
+      end
    end
 
-   txt = ffi.string(outbuf.data, outbuf.size)
-   C.sd_bufrelease(outbuf)
+   txt = ffi.string(ob.data, ob.size)
+   C.hoedown_buffer_free(ob);
 
    return txt, tree
 end
@@ -508,6 +571,19 @@ local function show(out, txt, tree, indent, style, maxlsz)
             table.insert(out, '')
          elseif node.tag == 'listitem' then
             show(out, node.text, tree, indent, style, maxlsz)
+         elseif node.tag == 'footnotes' then
+            table.insert(out, '')
+            showindent(out, style.hrule .. string.rep('_', math.min(20, maxlsz-indent)) .. style.none, indent)
+            table.insert(out, '')
+            show(out, node.text, tree, indent+1, style, maxlsz)
+            table.insert(out, '')
+         elseif node.tag == 'footnote' then
+            local num = node.num
+            while node.text:match('^(%b\030\031)') do
+               node = tree[ tonumber( node.text:match('^(%b\030\031)'):sub(2, -2) ) ]
+            end
+            local text = style.footnote .. '[' .. num .. '] ' .. style.none .. node.text
+            showindent(out, text, indent, maxlsz, style)
          elseif node.tag == 'tbl' then
             -- find cell sizes
             local function rendertblsz(text, maxsz)
