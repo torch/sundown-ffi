@@ -2554,3 +2554,8 @@ sd_version(int *ver_major, int *ver_minor, int *ver_revision)
 }
 
 /* vim: set filetype=c: */
+
+#if defined(_MSC_VER)
+#include "lua.h" 
+int __declspec(dllexport) __cdecl luaopen_libsundown(lua_State* L) { return 0; } 
+#endif 
