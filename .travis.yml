@@ -36,4 +36,4 @@ script:
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/sundown-scm-1.rockspec
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} -lsundown
+- ${TESTLUA} -lsundown -e "print('passed')"
