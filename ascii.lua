@@ -109,7 +109,7 @@ end
 local function createcallbacks(style)
    local tree = {}
    local n = 0
-   
+
    local callbacks = {
       blockcode =
          function(ob, text, lang, opaque)
@@ -156,7 +156,7 @@ local function createcallbacks(style)
             tree[n] = {tag='hrule'}
             C.sd_bufputs(ob, '\030' .. n .. '\031')
          end,
-      
+
       paragraph =
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
@@ -174,13 +174,13 @@ local function createcallbacks(style)
             else
                text = nil
             end
-            
+
             if header ~= nil and header.data ~= nil then
                header = ffi.string(header.data, header.size)
             else
                header = nil
             end
-            
+
             if text or header then
                n = n+1
                tree[n] = {tag='tbl', text=text, header=header}
@@ -214,7 +214,7 @@ local function createcallbacks(style)
                   left=(flags==1),
                   right=(flags==2),
                   center=(flags==3)
-               }            
+               }
                C.sd_bufputs(ob, '\030' .. n .. '\031')
             end
          end,
@@ -226,7 +226,7 @@ local function createcallbacks(style)
                n = n+1
                tree[n] = {tag='list', text=text, type=bit.band(flags, 1)}
                C.sd_bufputs(ob, '\030' .. n .. '\031')
-            end 
+            end
          end,
 
       listitem =
@@ -248,7 +248,7 @@ local function createcallbacks(style)
             end
          end,
 
-      entity = 
+      entity =
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
                text = ffi.string(text.data, text.size)
@@ -315,7 +315,7 @@ local function createcallbacks(style)
             local text = '\029'
             C.sd_bufputs(ob, text)
          end,
-      
+
       link =
          function(ob, link, title, content, opaque)
             local text = ''
@@ -339,7 +339,7 @@ local function createcallbacks(style)
             -- just ignore it
             return 1
          end,
-      
+
       triple_emphasis =
          function(ob, text, opaque)
             if text ~= nil and text.data ~= nil then
@@ -384,9 +384,9 @@ local function preprocess(txt, style)
    local callbacks, tree = createcallbacks(style)
    local c_callbacks = ffi.new('struct sd_callbacks', callbacks)
    local markdown = C.sd_markdown_new(0xfff, 16, c_callbacks, options)
-   
+
    local outbuf = C.sd_bufnew(64)
-   
+
    C.sd_markdown_render(outbuf, ffi.cast('const char*', txt), #txt, markdown)
    C.sd_markdown_free(markdown)
 
@@ -418,7 +418,7 @@ local function showjustified(out, text, indent, maxlsz)
       if #line > 0 then
          table.insert(lines, string.rep(' ', indent) .. table.concat(line, ' '))
          line = {}
-         szl = 0 
+         szl = 0
       end
    end
 
@@ -428,7 +428,7 @@ local function showjustified(out, text, indent, maxlsz)
                 function(stuff)
                    szw = szw - #stuff
                 end)
-      
+
       if szl+szw+1 > maxlsz-indent then
          newline()
       end
@@ -452,128 +452,125 @@ local function show(out, txt, tree, indent, style, maxlsz)
       if i and i == idx then
          showjustified(out, txt:sub(i, j), indent, maxlsz)
          idx = j+1
-         goto continue
-      end
-
-      i, j = txt:find('\029', idx)
-      if i and i == idx then
-         table.insert(out, '')
-         idx = j+1
-         goto continue
-      end
-
-      i, j = txt:find('(%b\030\031)', idx)
-      if i and i == idx then
-         idx = j+1
-         local node = tree[ tonumber(txt:sub(i+1, j-1)) ]
-         if node.tag == 'blockcode' then
+      else
+         i, j = txt:find('\029', idx)
+         if i and i == idx then
             table.insert(out, '')
-            showindent(out, node.text, indent)
-         elseif node.tag == 'blockquote' then
-            table.insert(out, '')
-            show(out, node.text, tree, indent+5, style, maxlsz-5)
-         elseif node.tag == 'header' then
-            table.insert(out, '')
-            indent = node.level
-            showindent(out, style['h' .. node.level] .. string.rep('+', maxlsz-indent+1) .. style.none, indent-1)
-            showjustified(out, node.text, indent-1, maxlsz)
-         elseif node.tag == 'hrule' then
-            table.insert(out, '')
-            showindent(out, style.hrule .. string.rep('_', maxlsz-indent) .. style.none, indent)
-         elseif node.tag == 'paragraph' then
-            table.insert(out, '')
-            showjustified(out, node.text, indent, maxlsz, style)
-         elseif node.tag == 'list' then
-            if node.type == 0 then
-               for nidx in node.text:gmatch('(%b\030\031)') do
-                  local subnode = tree[ tonumber(nidx:sub(2, -2)) ]
-                  while subnode.text:match('^(%b\030\031)') do
-                     subnode = tree[ tonumber( subnode.text:match('^(%b\030\031)'):sub(2, -2) ) ]
-                  end
-                  subnode.text = style.ulist .. '* ' .. style.none .. subnode.text 
-               end
-            else
-               local oidx = 0
-               for nidx in node.text:gmatch('(%b\030\031)') do
-                  local subnode = tree[ tonumber(nidx:sub(2, -2)) ]
-                  while subnode.text:match('^(%b\030\031)') do
-                     subnode = tree[ tonumber( subnode.text:match('^(%b\030\031)'):sub(2, -2) ) ]
-                  end
-                  oidx = oidx + 1
-                  subnode.text = style.olist .. oidx .. '. ' .. style.none .. subnode.text 
-               end
-            end
-            table.insert(out, '')
-            show(out, node.text, tree, indent+3, style, maxlsz)
-            table.insert(out, '')
-         elseif node.tag == 'listitem' then
-            show(out, node.text, tree, indent, style, maxlsz)
-         elseif node.tag == 'tbl' then
-            -- find cell sizes
-            local function rendertblsz(text, maxsz)
-               local idxrow = 0
-               for row in text:gmatch('(%b\030\031)') do
-                  idxrow = idxrow + 1
-                  local sz = {}
-                  row = tree[ tonumber(row:sub(2, -2)) ]
-                  assert(row.tag == 'tblrow')
-                  local idxcell = 0
-                  for cell in row.text:gmatch('(%b\030\031)') do
-                     idxcell = idxcell + 1
-                     sz[idxcell] = sz[idxcell] or 0
-                     maxsz[idxcell] = maxsz[idxcell] or 0
-                     cell = tree[ tonumber(cell:sub(2, -2)) ]
-                     assert(cell.tag == 'tblcell')
-                     sz[idxcell] = sz[idxcell] + cell.size
-                  end
-                  for idxcell=1,#sz do
-                     maxsz[idxcell] = math.max(maxsz[idxcell], sz[idxcell])
-                  end
-               end
-            end
-
-            local maxsz = {}
-            rendertblsz(node.header, maxsz)
-            rendertblsz(node.text, maxsz)
-
-            -- print it
-            local function rendertbl(text, maxsz, isheader)
-               local sztot = 0
-               for i=1,#maxsz do
-                  sztot = sztot + maxsz[i]
-               end
-               local idxrow = 0
-               if isheader then
-                  showindent(out, ' ' .. string.rep('-', sztot+(#maxsz-1)*3+2), indent)
-               end
-               for row in text:gmatch('(%b\030\031)') do
-                  idxrow = idxrow + 1
-                  row = tree[ tonumber(row:sub(2, -2)) ]
-                  local line = {}
-                  local idxcell = 0
-                  for cell in row.text:gmatch('(%b\030\031)') do
-                     idxcell = idxcell + 1
-                     cell = tree[ tonumber(cell:sub(2, -2)) ]
-                     if cell.right then
-                        table.insert(line, string.rep(' ', maxsz[idxcell]-cell.size) .. cell.text)
-                     elseif cell.center then
-                        local szh2 = math.floor((maxsz[idxcell]-cell.size)/2)
-                        table.insert(line, string.rep(' ', szh2) .. cell.text .. string.rep(' ', maxsz[idxcell]-cell.size-szh2))
-                     else
-                        table.insert(line, cell.text .. string.rep(' ', maxsz[idxcell]-cell.size))
+            idx = j+1
+         else
+            i, j = txt:find('(%b\030\031)', idx)
+            if i and i == idx then
+               idx = j+1
+               local node = tree[ tonumber(txt:sub(i+1, j-1)) ]
+               if node.tag == 'blockcode' then
+                  table.insert(out, '')
+                  showindent(out, node.text, indent)
+               elseif node.tag == 'blockquote' then
+                  table.insert(out, '')
+                  show(out, node.text, tree, indent+5, style, maxlsz-5)
+               elseif node.tag == 'header' then
+                  table.insert(out, '')
+                  indent = node.level
+                  showindent(out, style['h' .. node.level] .. string.rep('+', maxlsz-indent+1) .. style.none, indent-1)
+                  showjustified(out, node.text, indent-1, maxlsz)
+               elseif node.tag == 'hrule' then
+                  table.insert(out, '')
+                  showindent(out, style.hrule .. string.rep('_', maxlsz-indent) .. style.none, indent)
+               elseif node.tag == 'paragraph' then
+                  table.insert(out, '')
+                  showjustified(out, node.text, indent, maxlsz, style)
+               elseif node.tag == 'list' then
+                  if node.type == 0 then
+                     for nidx in node.text:gmatch('(%b\030\031)') do
+                        local subnode = tree[ tonumber(nidx:sub(2, -2)) ]
+                        while subnode.text:match('^(%b\030\031)') do
+                           subnode = tree[ tonumber( subnode.text:match('^(%b\030\031)'):sub(2, -2) ) ]
+                        end
+                        subnode.text = style.ulist .. '* ' .. style.none .. subnode.text
+                     end
+                  else
+                     local oidx = 0
+                     for nidx in node.text:gmatch('(%b\030\031)') do
+                        local subnode = tree[ tonumber(nidx:sub(2, -2)) ]
+                        while subnode.text:match('^(%b\030\031)') do
+                           subnode = tree[ tonumber( subnode.text:match('^(%b\030\031)'):sub(2, -2) ) ]
+                        end
+                        oidx = oidx + 1
+                        subnode.text = style.olist .. oidx .. '. ' .. style.none .. subnode.text
                      end
                   end
-                  showindent(out, '| ' .. table.concat(line, ' | ') .. ' |', indent)
+                  table.insert(out, '')
+                  show(out, node.text, tree, indent+3, style, maxlsz)
+                  table.insert(out, '')
+               elseif node.tag == 'listitem' then
+                  show(out, node.text, tree, indent, style, maxlsz)
+               elseif node.tag == 'tbl' then
+                  -- find cell sizes
+                  local function rendertblsz(text, maxsz)
+                     local idxrow = 0
+                     for row in text:gmatch('(%b\030\031)') do
+                        idxrow = idxrow + 1
+                        local sz = {}
+                        row = tree[ tonumber(row:sub(2, -2)) ]
+                        assert(row.tag == 'tblrow')
+                        local idxcell = 0
+                        for cell in row.text:gmatch('(%b\030\031)') do
+                           idxcell = idxcell + 1
+                           sz[idxcell] = sz[idxcell] or 0
+                           maxsz[idxcell] = maxsz[idxcell] or 0
+                           cell = tree[ tonumber(cell:sub(2, -2)) ]
+                           assert(cell.tag == 'tblcell')
+                           sz[idxcell] = sz[idxcell] + cell.size
+                        end
+                        for idxcell=1,#sz do
+                           maxsz[idxcell] = math.max(maxsz[idxcell], sz[idxcell])
+                        end
+                     end
+                  end
+
+                  local maxsz = {}
+                  rendertblsz(node.header, maxsz)
+                  rendertblsz(node.text, maxsz)
+
+                  -- print it
+                  local function rendertbl(text, maxsz, isheader)
+                     local sztot = 0
+                     for i=1,#maxsz do
+                        sztot = sztot + maxsz[i]
+                     end
+                     local idxrow = 0
+                     if isheader then
+                        showindent(out, ' ' .. string.rep('-', sztot+(#maxsz-1)*3+2), indent)
+                     end
+                     for row in text:gmatch('(%b\030\031)') do
+                        idxrow = idxrow + 1
+                        row = tree[ tonumber(row:sub(2, -2)) ]
+                        local line = {}
+                        local idxcell = 0
+                        for cell in row.text:gmatch('(%b\030\031)') do
+                           idxcell = idxcell + 1
+                           cell = tree[ tonumber(cell:sub(2, -2)) ]
+                           if cell.right then
+                              table.insert(line, string.rep(' ', maxsz[idxcell]-cell.size) .. cell.text)
+                           elseif cell.center then
+                              local szh2 = math.floor((maxsz[idxcell]-cell.size)/2)
+                              table.insert(line, string.rep(' ', szh2) .. cell.text .. string.rep(' ', maxsz[idxcell]-cell.size-szh2))
+                           else
+                              table.insert(line, cell.text .. string.rep(' ', maxsz[idxcell]-cell.size))
+                           end
+                        end
+                        showindent(out, '| ' .. table.concat(line, ' | ') .. ' |', indent)
+                     end
+                     showindent(out, ' ' .. string.rep('-', sztot+(#maxsz-1)*3+2), indent)
+                  end
+                  rendertbl(node.header, maxsz, true)
+                  rendertbl(node.text, maxsz)
                end
-               showindent(out, ' ' .. string.rep('-', sztot+(#maxsz-1)*3+2), indent)
+            else
+               break
             end
-            rendertbl(node.header, maxsz, true)
-            rendertbl(node.text, maxsz)
          end
-      else
-         break
       end
-      ::continue::
    end
 end
 
