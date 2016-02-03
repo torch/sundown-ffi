@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/torch/sundown-ffi.svg)](https://travis-ci.org/torch/sundown-ffi)
+
 sundown-ffi
 ===========
 
