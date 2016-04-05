@@ -383,7 +383,7 @@ end
 local function preprocess(txt, style)
    local callbacks, tree = createcallbacks(style)
    local c_callbacks = ffi.new('struct sd_callbacks', callbacks)
-   local markdown = C.sd_markdown_new(0xfff, 16, c_callbacks, options)
+   local markdown = C.sd_markdown_new(0xfff, 16, c_callbacks)
 
    local outbuf = C.sd_bufnew(64)
 
