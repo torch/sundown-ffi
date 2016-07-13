@@ -1,6 +1,7 @@
 local sundown = require 'sundown.env'
 local C = sundown.C
 local ffi = require 'ffi'
+local bit = require 'bit'
 
 require 'sundown.sdcdefs'
 
