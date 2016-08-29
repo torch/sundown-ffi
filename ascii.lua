@@ -1,7 +1,13 @@
 local sundown = require 'sundown.env'
 local C = sundown.C
 local ffi = require 'ffi'
-local bit = require 'bit'
+local bit
+
+if _VERSION == 'Lua 5.2' or _VERSION == 'Lua 5.3' then
+   bit = require 'bit32'
+else
+   bit = require 'bit'
+end
 
 require 'sundown.sdcdefs'
 
