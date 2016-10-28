@@ -22,6 +22,12 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+#ifdef _WIN32
+#define SD_EXPORT __declspec(dllexport)
+#else
+#define SD_EXPORT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,37 +63,37 @@ struct sd_buf {
 	sd_bufput(output, literal, sizeof literal - 1)
 
 /* bufgrow: increasing the allocated size to the given value */
-int sd_bufgrow(struct sd_buf *, size_t);
+SD_EXPORT int sd_bufgrow(struct sd_buf *, size_t);
 
 /* bufnew: allocation of a new buffer */
-struct sd_buf *sd_bufnew(size_t) __attribute__ ((malloc));
+SD_EXPORT struct sd_buf *sd_bufnew(size_t) __attribute__ ((malloc));
 
 /* bufnullterm: NUL-termination of the string array (making a C-string) */
-const char *sd_bufcstr(struct sd_buf *);
+SD_EXPORT const char *sd_bufcstr(struct sd_buf *);
 
 /* bufprefix: compare the beginning of a buffer with a string */
-int sd_bufprefix(const struct sd_buf *buf, const char *prefix);
+SD_EXPORT int sd_bufprefix(const struct sd_buf *buf, const char *prefix);
 
 /* bufput: appends raw data to a buffer */
-void sd_bufput(struct sd_buf *, const void *, size_t);
+SD_EXPORT void sd_bufput(struct sd_buf *, const void *, size_t);
 
 /* bufputs: appends a NUL-terminated string to a buffer */
-void sd_bufputs(struct sd_buf *, const char *);
+SD_EXPORT void sd_bufputs(struct sd_buf *, const char *);
 
 /* bufputc: appends a single char to a buffer */
-void sd_bufputc(struct sd_buf *, int);
+SD_EXPORT void sd_bufputc(struct sd_buf *, int);
 
 /* bufrelease: decrease the reference count and free the buffer if needed */
-void sd_bufrelease(struct sd_buf *);
+SD_EXPORT void sd_bufrelease(struct sd_buf *);
 
 /* bufreset: frees internal data of the buffer */
-void sd_bufreset(struct sd_buf *);
+SD_EXPORT void sd_bufreset(struct sd_buf *);
 
 /* bufslurp: removes a given number of bytes from the head of the array */
-void sd_bufslurp(struct sd_buf *, size_t);
+SD_EXPORT void sd_bufslurp(struct sd_buf *, size_t);
 
 /* bufprintf: formatted printing to a buffer */
-void sd_bufprintf(struct sd_buf *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
+SD_EXPORT void sd_bufprintf(struct sd_buf *, const char *, ...) __attribute__ ((format (printf, 2, 3)));
 
 #ifdef __cplusplus
 }

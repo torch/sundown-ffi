@@ -2557,5 +2557,5 @@ sd_version(int *ver_major, int *ver_minor, int *ver_revision)
 
 #if defined(_MSC_VER)
 #include "lua.h" 
-int __declspec(dllexport) __cdecl luaopen_libsundown(lua_State* L) { return 0; } 
+SD_EXPORT int luaopen_libsundown(lua_State* L) { return 0; }
 #endif 
