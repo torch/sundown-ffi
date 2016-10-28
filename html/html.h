@@ -57,16 +57,16 @@ typedef enum {
 	HTML_TAG_CLOSE,
 } html_tag;
 
-int
+SD_EXPORT int
 sd_html_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname);
 
-extern void
+extern SD_EXPORT void
 sd_html_renderer(struct sd_callbacks *callbacks, struct sd_html_renderopt *options_ptr, unsigned int render_flags);
 
-extern void
+extern SD_EXPORT void
 sd_html_toc_renderer(struct sd_callbacks *callbacks, struct sd_html_renderopt *options_ptr);
 
-extern void
+extern SD_EXPORT void
 sd_html_smartypants(struct sd_buf *ob, const uint8_t *text, size_t size);
 
 #ifdef __cplusplus

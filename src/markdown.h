@@ -31,6 +31,12 @@ extern "C" {
 #define SUNDOWN_VER_MINOR 16
 #define SUNDOWN_VER_REVISION 0
 
+#ifdef _WIN32
+#define SD_EXPORT __declspec(dllexport)
+#else
+#define SD_EXPORT
+#endif
+
 /********************
  * TYPE DEFINITIONS *
  ********************/
@@ -113,20 +119,20 @@ struct sd_markdown;
  * EXPORTED FUNCTIONS *
  **********************/
 
-extern struct sd_markdown *
+extern SD_EXPORT struct sd_markdown *
 sd_markdown_new(
 	unsigned int extensions,
 	size_t max_nesting,
 	const struct sd_callbacks *callbacks,
 	void *opaque);
 
-extern void
+extern SD_EXPORT void
 sd_markdown_render(struct sd_buf *ob, const uint8_t *document, size_t doc_size, struct sd_markdown *md);
 
-extern void
+extern SD_EXPORT void
 sd_markdown_free(struct sd_markdown *md);
 
-extern void
+extern SD_EXPORT void
 sd_version(int *major, int *minor, int *revision);
 
 #ifdef __cplusplus
